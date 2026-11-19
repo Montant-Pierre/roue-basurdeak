@@ -159,7 +159,10 @@ const LOTS = [
   { id: "ESPEL",  part: "PATE",  nom: "un pâté basque au piment d'Espelette", emoji: "🥫", photo: "photos/pate-espelette.jpg" },
   { id: "SAUC",   part: "SAUC",  nom: "un saucisson",                        emoji: "🥓", photo: "photos/saucisson.jpg" },
   { id: "ROUGE",  part: "ROUGE", nom: "une bouteille de Madiran",            emoji: "🍷", photo: "photos/vin-madiran.jpg" },
-  { id: "BIERE",  part: "BIERE", nom: "une bouteille de Goudale",            emoji: "🍺", photo: "photos/biere.jpg" }
+  { id: "BIERE",  part: "BIERE", nom: "une bouteille de Goudale",            emoji: "🍺", photo: "photos/biere.jpg" },
+  { id: "TABLIER", part: "CADEAU", nom: "un magnifique tablier",             emoji: "🎁", photo: "photos/tablier.jpg",
+    texte: "Notre <b>maître des festivités</b> t'offre un magnifique tablier !",
+    retrait: "Retrouve-le et montre-lui cet écran pour récupérer ton tablier." }
 ];
 // Cases "lot" de la roue
 const CASES_LOTS = [
@@ -178,7 +181,13 @@ const PETITS_GAINS = [
   { id: "BASTIEN", titre: "Notre maître des fourneaux te paie un verre !", emoji: "🍻", photo: "photos/bastien.jpg",
     texte: "Trouve <b>notre maître des fourneaux</b> : il te paie un verre… ou une clope 🚬<br>À toi de deviner lequel c'est sur la photo !" },
   { id: "MESSAGER", titre: "Notre messager te paie un verre !", emoji: "🍻", photo: "photos/messager.jpg",
-    texte: "Trouve <b>notre messager</b> : il te paie un verre.<br>Ce soir il est venu seul, sa copine est restée à la plage 😏" }
+    texte: "Trouve <b>notre messager</b> : il te paie un verre.<br>Ce soir il est venu seul, sa copine est restée à la plage 😏" },
+  { id: "INTENDANT", titre: "Notre intendant des breuvages te paie un verre !", emoji: "🍻", photo: "",
+    texte: "Trouve <b>notre intendant des breuvages</b> : il te paie un verre.<br>Normal, c'est lui qui garde les bouteilles 🍷" },
+  { id: "AMBASSADEUR", titre: "Notre ambassadeur du terroir te paie un verre !", emoji: "🍻", photo: "",
+    texte: "Trouve <b>notre ambassadeur du terroir</b> : il te paie un verre.<br>Et il t'expliquera sûrement d'où vient chaque goutte 🍇" },
+  { id: "PORTEUR", titre: "Notre porteur de marmite te paie un verre !", emoji: "🍻", photo: "",
+    texte: "Trouve <b>notre porteur de marmite</b> : il te paie un verre.<br>Tu le reconnaîtras, il a des bras solides 💪" }
 ];
 
 // Perdu : une phrase, et une photo si tu veux (photo: "" pour aucune).
@@ -186,12 +195,12 @@ const PETITS_GAINS = [
 // faux: true = faux "GAGNÉ !" qui tombe sur la case Cadeau (c'est quand même perdu)
 const PERDUS = [
   { texte: "Perdu ! Même Gabo en taule a plus de chance que toi.", photo: "photos/gabo.jpg" },
-  { faux: true, photo: "photos/tablier.jpg",
+  { faux: true, retire: true, photo: "photos/tablier.jpg", // ancien faux gain : plus tiré, gardé pour ceux qui l'ont déjà eu
     titre: "Notre maître des festivités t'offre un magnifique tablier !",
     texte: "Enfin… une photo de lui avec. C'est déjà pas mal, non ? 😘" },
   { texte: "Raté ! Va noyer ton chagrin au bar.", photo: "" },
   { texte: "Perdu ! Le sanglier ne t'a pas choisi cette fois 🐗", photo: "" },
-  { texte: "Raté ! T'avais 81 % de chances de lire ce message. Bravo, t'es dans la moyenne.", photo: "" },
+  { texte: "Raté ! T'avais 76 % de chances de lire ce message. Bravo, t'es dans la moyenne.", photo: "" },
   { texte: "Ez duzu irabazi ! (Ça veut dire « t'as perdu » en basque. On t'apprend des trucs au moins.)", photo: "" },
   { texte: "Perdu ! Mais tu peux quand même t'abonner à notre compte Insta, ça console 🐗", photo: "", insta: true }
 ];
@@ -206,7 +215,7 @@ function tirageTest() {
   const issues = [
     ...LOTS.map(l => ({ type: "lot", id: l.id, code: l.id + "-TEST" })),
     ...PETITS_GAINS.map(g => ({ type: "gain", id: g.id, code: "VERRE-TEST" })),
-    ...PERDUS.map((x, idx) => ({ type: "perdu", idx }))
+    ...PERDUS.map((x, idx) => ({ type: "perdu", idx })).filter(r => !PERDUS[r.idx].retire)
   ];
   return issues[Math.floor(Math.random() * issues.length)];
 }
@@ -222,7 +231,8 @@ async function tirerServeur() {
   const d = await r.json();
   if (d.type === "lot") return { type: "lot", id: d.id, code: d.code };
   if (d.type === "verre") return { type: "gain", id: d.id, code: d.code };
-  return { type: "perdu", idx: Math.floor(Math.random() * PERDUS.length) };
+  const possibles = PERDUS.map((x, i) => i).filter(i => !PERDUS[i].retire);
+  return { type: "perdu", idx: possibles[Math.floor(Math.random() * possibles.length)] };
 }
 
 // ---------- Parts de la roue (décoratives) ----------
@@ -231,7 +241,7 @@ function construireParts() {
   const speciales = CASES_LOTS.map(c => ({ type: "lot", id: c.id, label: c.label }));
   speciales.splice(1, 0, { type: "gain", label: "🍻 Verre" });
   speciales.splice(3, 0, { type: "gain", label: "🍻 Verre" });
-  speciales.splice(5, 0, { type: "cadeau", label: "🎁 Cadeau" });
+  speciales.splice(5, 0, { type: "lot", id: "CADEAU", label: "🎁 Cadeau" });
   const parts = [];
   speciales.forEach(s => { parts.push(s); parts.push({ type: "perdu", label: "💀 Perdu" }); });
   return parts;
@@ -263,7 +273,8 @@ const estFaux = res => res.type === "perdu" && PERDUS[res.idx] && PERDUS[res.idx
 function indicePour(res) {
   const cible = estFaux(res) ? "cadeau" : res.type;
   const lot = LOTS.find(l => l.id === res.id);
-  const caseLot = lot ? lot.part : res.id;
+  const caseLot = estFaux(res) ? "CADEAU" : (lot ? lot.part : res.id);
+  if (cible === "cadeau") return PARTS.findIndex(p => p.id === "CADEAU");
   const ok = PARTS.map((p, i) => ({ p, i })).filter(({ p }) =>
     p.type === cible && (cible !== "lot" || p.id === caseLot));
   return ok[Math.floor(Math.random() * ok.length)].i;
