@@ -129,7 +129,7 @@
   <div class="script">Basurdeak</div>
   <div id="carte" class="carte"></div>
   <div class="pied">
-    <a id="lien-insta-pied" class="bouton vert" target="_blank" rel="noopener">📸 Suis-nous sur Insta</a>
+    <a id="lien-insta-pied" class="bouton vert">📸 Suis-nous sur Insta</a>
   </div>
 </div>
 
@@ -325,7 +325,7 @@ function afficher(res, dejaJoue, sansConfettis) {
       <div class="code petit-code">${res.code || ""}</div>
       <p class="petit">Montre-lui cet écran pour réclamer ton dû. Tiré à ${res.heure}</p>
       <p class="texte">Tu ne le reconnais pas ? Indice sur notre Insta 👇</p>
-      <a class="bouton" href="${urlInsta}" target="_blank" rel="noopener">🔎 Voir l'indice sur Insta</a>`;
+      <a class="bouton" href="${urlInsta}">🔎 Voir l'indice sur Insta</a>`;
   } else if (estFaux(res)) {
     const x = PERDUS[res.idx];
     carte.className = "carte gagne";
@@ -339,7 +339,7 @@ function afficher(res, dejaJoue, sansConfettis) {
     html = `<div class="grand-titre">PERDU 😭</div>
       <p class="texte">${x.texte}</p>
       ${photoHTML(x.photo)}
-      ${x.insta ? `<a class="bouton" href="${urlInsta}" target="_blank" rel="noopener">📸 Je m'abonne</a>` : ""}`;
+      ${x.insta ? `<a class="bouton" href="${urlInsta}">📸 Je m'abonne</a>` : ""}`;
   }
   if (dejaJoue) html += `<p class="deja">Tu as déjà joué, voici ton résultat 😉</p>`;
   if (TEST) html += `<p style="margin-top:18px"><button class="bouton" onclick="location.reload()">🔄 REJOUER (test)</button></p>`;
