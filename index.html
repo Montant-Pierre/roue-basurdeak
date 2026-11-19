@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#d52b1e">
+<title>La Roue des Basurdeak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rouge: #d52b1e;
+    --vert: #009b48;
+    --blanc: #ffffff;
+    --texte: #2b2b2b;
+    --gris: #6b6b6b;
+    --bande: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--blanc);
+    color: var(--texte);
+    font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-weight: 500;
+    text-align: center;
+    padding: 16px calc(var(--bande) + 12px) 36px;
+    overflow-x: hidden;
+  }
+  /* Bandes rouges à gauche, vertes à droite (comme le diaporama) */
+  body::before, body::after {
+    content: ""; position: fixed; top: 0; bottom: 0; width: var(--bande); z-index: 0;
+  }
+  body::before { left: 0;  background: linear-gradient(90deg, var(--rouge) 0 36%, transparent 36% 64%, var(--rouge) 64%); }
+  body::after  { right: 0; background: linear-gradient(90deg, var(--vert) 0 36%, transparent 36% 64%, var(--vert) 64%); }
+
+  .ecran { position: relative; z-index: 1; max-width: 440px; margin: 0 auto; }
+  .cache { display: none !important; }
+
+  .logo { width: 96px; height: 96px; border-radius: 50%; display: block; margin: 0 auto 4px; }
+  .logo.petit-logo { width: 72px; height: 72px; }
+  .bbv { font-weight: 900; color: var(--rouge); font-size: 2.6rem; line-height: 1; letter-spacing: 1px; }
+  .script { font-family: "Dancing Script", cursive; color: var(--vert); font-size: 2.2rem; line-height: 1.1; }
+  .sous-titre { color: var(--rouge); font-family: "Dancing Script", cursive; font-size: 1.5rem; margin-top: 2px; }
+
+  /* Roue */
+  .roue-zone { position: relative; width: min(calc(100vw - 64px), 380px); margin: 18px auto 18px; }
+  .roue-zone canvas {
+    width: 100%; height: auto; display: block; border-radius: 50%;
+    box-shadow: 0 0 0 6px var(--vert), 0 0 0 10px var(--blanc), 0 0 0 13px var(--rouge), 0 8px 26px rgba(0,0,0,.18);
+    transition: transform 4.8s cubic-bezier(.12,.75,.12,1);
+  }
+  .pointeur {
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; z-index: 2;
+    border-left: 17px solid transparent; border-right: 17px solid transparent;
+    border-top: 34px solid var(--rouge);
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+  }
+  .centre {
+    position: absolute; top: 50%; left: 50%; width: 24%; aspect-ratio: 1;
+    transform: translate(-50%,-50%); border-radius: 50%; overflow: hidden;
+    background: var(--blanc); box-shadow: 0 0 0 4px var(--vert), 0 2px 8px rgba(0,0,0,.3);
+  }
+  .centre img { width: 100%; height: 100%; display: block; }
+
+  .bouton {
+    display: inline-block; border: 0; cursor: pointer; touch-action: manipulation;
+    background: var(--rouge); color: var(--blanc);
+    font-family: "Montserrat", sans-serif; font-weight: 900; font-size: 1.2rem; letter-spacing: .5px;
+    padding: 16px 30px; border-radius: 999px; text-decoration: none;
+    box-shadow: 0 5px 0 #8f1c13, 0 10px 20px rgba(0,0,0,.18);
+  }
+  .bouton:active { transform: translateY(3px); box-shadow: 0 2px 0 #8f1c13; }
+  .bouton:disabled { opacity: .6; }
+  .bouton.vert { background: var(--vert); box-shadow: 0 5px 0 #005f2c, 0 10px 20px rgba(0,0,0,.18); font-size: 1.05rem; }
+  .erreur { color: var(--rouge); font-weight: 700; margin-top: 12px; }
+
+  /* Résultat */
+  .carte {
+    background: var(--blanc); border: 3px solid var(--vert);
+    border-radius: 22px; padding: 22px 16px; margin-top: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.08);
+  }
+  .carte.perdu { border-color: var(--rouge); }
+  .grand-titre { font-weight: 900; font-size: 2.4rem; }
+  .gagne .grand-titre { color: var(--vert); }
+  .perdu .grand-titre { color: var(--rouge); }
+  .emoji { font-size: 4rem; margin: 6px 0; }
+  .texte { font-size: 1.12rem; line-height: 1.45; margin: 10px 0 14px; }
+  .texte b { color: var(--rouge); }
+  .photo { display: block; max-width: 100%; max-height: 50vh; width: auto; height: auto; margin: 6px auto 10px; border-radius: 14px; border: 3px solid var(--rouge); }
+  .code {
+    font-family: ui-monospace, Consolas, monospace; font-size: 1.8rem; font-weight: 800; letter-spacing: 2px;
+    background: var(--rouge); color: var(--blanc); border-radius: 12px; padding: 10px; margin: 10px 0 6px;
+  }
+  .code.petit-code { font-size: 1.1rem; padding: 6px; background: var(--vert); }
+  .petit { color: var(--gris); font-size: .88rem; margin-top: 8px; }
+  .deja { color: var(--vert); font-weight: 700; margin-top: 10px; }
+  .pied { margin-top: 24px; }
+
+  /* Confettis */
+  .confetti { position: fixed; top: -12px; width: 10px; height: 16px; z-index: 50; pointer-events: none; animation: tombe linear forwards; }
+  @keyframes tombe { to { transform: translateY(110vh) rotate(720deg); } }
+</style>
+</head>
+<body>
+
+<!-- ÉCRAN 1 : la roue -->
+<div id="ecran-roue" class="ecran">
+  <img class="logo" src="logo.jpg" alt="Logo BBV Basurdeak">
+  <div class="bbv">BBV</div>
+  <div class="script">Basurdeak</div>
+  <p class="sous-titre">Tourne la roue et tente ta chance !</p>
+  <div class="roue-zone">
+    <div class="pointeur"></div>
+    <canvas id="roue" width="760" height="760"></canvas>
+    <div class="centre"><img src="logo.jpg" alt=""></div>
+  </div>
+  <button id="btn-tourner" class="bouton">TOURNER LA ROUE</button>
+  <p id="erreur" class="erreur cache">Pas de réseau 😕 Rapproche-toi d'une fenêtre et réessaie !</p>
+  <p class="petit">1 seul essai par téléphone 😉</p>
+</div>
+
+<!-- ÉCRAN 2 : le résultat -->
+<div id="ecran-resultat" class="ecran cache">
+  <img class="logo petit-logo" src="logo.jpg" alt="Logo BBV Basurdeak">
+  <div class="script">Basurdeak</div>
+  <div id="carte" class="carte"></div>
+  <div class="pied">
+    <a id="lien-insta-pied" class="bouton vert" target="_blank" rel="noopener">📸 Suis-nous sur Insta</a>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ⚙️  RÉGLAGES : textes, photos, compte Insta
+   Le STOCK des lots est géré sur le serveur (Supabase) : chaque lot
+   ne peut être gagné qu'une seule fois. Les "id" doivent correspondre.
+   ===================================================================== */
+const CONFIG = {
+  asso: "BBV Basurdeak",
+  instagram: "_basurdeak_",
+  distributeur: "un membre des Basurdeak",
+  supabaseUrl: "https://bofthqerlottdtuqmbxb.supabase.co",
+  supabaseKey: "sb_publishable_BuDoZbRsZwKz5OZIhcP0gA_ekxh9tBH" // clé publique, prévue pour être dans la page
+};
+
+// Vrais lots (stock côté serveur : PATE, CEPES, PORC, CANARD, ESPEL, SAUC = 1 chacun ; ROUGE, BIERE = 2 chacun)
+// part = sur quelle case de la roue ça tombe
+const LOTS = [
+  { id: "PATE",   part: "PATE",  nom: "un pâté",  emoji: "🥫", photo: "photos/diplomate.jpg",
+    texte: "Notre <b>grand diplomate</b> t'offre cette boîte de pâté !",
+    retrait: "Retrouve-le et montre-lui cet écran pour gagner ton lot." },
+  { id: "CEPES",  part: "PATE",  nom: "un pâté basque aux cèpes",            emoji: "🥫", photo: "photos/pate-cepes.jpg" },
+  { id: "PORC",   part: "PATE",  nom: "un pâté basque pur porc",             emoji: "🥫", photo: "photos/pate-porc.jpg" },
+  { id: "CANARD", part: "PATE",  nom: "des rillettes pur canard",            emoji: "🥫", photo: "photos/rillettes-canard.jpg" },
+  { id: "ESPEL",  part: "PATE",  nom: "un pâté basque au piment d'Espelette", emoji: "🥫", photo: "photos/pate-espelette.jpg" },
+  { id: "SAUC",   part: "SAUC",  nom: "un saucisson",                        emoji: "🥓", photo: "photos/saucisson.jpg" },
+  { id: "ROUGE",  part: "ROUGE", nom: "une bouteille de Madiran",            emoji: "🍷", photo: "photos/vin-madiran.jpg" },
+  { id: "BIERE",  part: "BIERE", nom: "une bouteille de Goudale",            emoji: "🍺", photo: "photos/biere.jpg" }
+];
+// Cases "lot" de la roue
+const CASES_LOTS = [
+  { id: "SAUC",  label: "🥓 Saucisson" },
+  { id: "PATE",  label: "🥫 Pâté" },
+  { id: "ROUGE", label: "🍷 Vin rouge" },
+  { id: "BIERE", label: "🍺 Bière" }
+];
+
+// Verres payés : 1 seul par personne (stock 1 chacun côté serveur : PIERRE, MANICHE, BASTIEN, MESSAGER)
+const PETITS_GAINS = [
+  { id: "PIERRE", titre: "Notre président t'offre un verre !", emoji: "🍻", photo: "photos/pierre.jpg",
+    texte: "Trouve <b>notre président</b> : il t'offre un verre.<br>J'espère que tu ne finiras pas comme lui ce soir 👆" },
+  { id: "MANICHE", titre: "Maniche te paie un verre !", emoji: "🍻", photo: "photos/maniche.jpg",
+    texte: "Si tu trouves <b>Maniche</b>, il te paie un verre.<br>Sans le chapeau, il est moins facile à repérer 😏" },
+  { id: "BASTIEN", titre: "Notre maître des fourneaux te paie un verre !", emoji: "🍻", photo: "photos/bastien.jpg",
+    texte: "Trouve <b>notre maître des fourneaux</b> : il te paie un verre… ou une clope 🚬<br>À toi de deviner lequel c'est sur la photo !" },
+  { id: "MESSAGER", titre: "Notre messager te paie un verre !", emoji: "🍻", photo: "photos/messager.jpg",
+    texte: "Trouve <b>notre messager</b> : il te paie un verre.<br>Ce soir il est venu seul, sa copine est restée à la plage 😏" }
+];
+
+// Perdu : une phrase, et une photo si tu veux (photo: "" pour aucune).
+// Chaque perdant tombe au hasard sur une de ces blagues.
+// faux: true = faux "GAGNÉ !" qui tombe sur la case Cadeau (c'est quand même perdu)
+const PERDUS = [
+  { texte: "Perdu ! Même Gabo en taule a plus de chance que toi.", photo: "photos/gabo.jpg" },
+  { faux: true, photo: "photos/tablier.jpg",
+    titre: "Notre maître des festivités t'offre un magnifique tablier !",
+    texte: "Enfin… une photo de lui avec. C'est déjà pas mal, non ? 😘" },
+  { texte: "Raté ! Va noyer ton chagrin au bar.", photo: "" },
+  { texte: "Perdu ! Le sanglier ne t'a pas choisi cette fois 🐗", photo: "" },
+  { texte: "Raté ! T'avais 86 % de chances de lire ce message. Bravo, t'es dans la moyenne.", photo: "" },
+  { texte: "Ez duzu irabazi ! (Ça veut dire « t'as perdu » en basque. On t'apprend des trucs au moins.)", photo: "" },
+  { texte: "Perdu ! Mais tu peux quand même t'abonner à notre compte Insta, ça console 🐗", photo: "", insta: true }
+];
+/* ===================================================================== */
+
+const CLE = "roue-banquet-v2";
+const ROUGE = "#d52b1e", VERT = "#009b48", BLANC = "#ffffff";
+const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+// Mode test (uniquement en local, ?test=1) : tirage simulé, rien n'est enregistré, on peut rejouer à l'infini
+const TEST = LOCAL && new URLSearchParams(location.search).has("test");
+function tirageTest() {
+  const issues = [
+    ...LOTS.map(l => ({ type: "lot", id: l.id, code: l.id + "-TEST" })),
+    ...PETITS_GAINS.map(g => ({ type: "gain", id: g.id, code: "VERRE-TEST" })),
+    ...PERDUS.map((x, idx) => ({ type: "perdu", idx }))
+  ];
+  return issues[Math.floor(Math.random() * issues.length)];
+}
+
+// ---------- Tirage côté serveur (stock partagé) ----------
+async function tirerServeur() {
+  const r = await fetch(CONFIG.supabaseUrl + "/rest/v1/rpc/tourner", {
+    method: "POST",
+    headers: { apikey: CONFIG.supabaseKey, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const d = await r.json();
+  if (d.type === "lot") return { type: "lot", id: d.id, code: d.code };
+  if (d.type === "verre") return { type: "gain", id: d.id, code: d.code };
+  return { type: "perdu", idx: Math.floor(Math.random() * PERDUS.length) };
+}
+
+// ---------- Parts de la roue (décoratives) ----------
+// Un lot = une part, 2 parts "verre", et une part "perdu" entre chaque
+function construireParts() {
+  const speciales = CASES_LOTS.map(c => ({ type: "lot", id: c.id, label: c.label }));
+  speciales.splice(1, 0, { type: "gain", label: "🍻 Verre" });
+  speciales.splice(3, 0, { type: "gain", label: "🍻 Verre" });
+  speciales.splice(5, 0, { type: "cadeau", label: "🎁 Cadeau" });
+  const parts = [];
+  speciales.forEach(s => { parts.push(s); parts.push({ type: "perdu", label: "💀 Perdu" }); });
+  return parts;
+}
+const PARTS = construireParts();
+
+const canvas = document.getElementById("roue");
+const ctx = canvas.getContext("2d");
+function dessinerRoue() {
+  const n = PARTS.length, R = canvas.width / 2, a = 2 * Math.PI / n;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  PARTS.forEach((part, i) => {
+    const debut = -Math.PI / 2 + i * a;
+    ctx.beginPath(); ctx.moveTo(R, R); ctx.arc(R, R, R, debut, debut + a); ctx.closePath();
+    ctx.fillStyle = part.type === "lot" ? ROUGE : part.type === "perdu" ? BLANC : VERT;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,.12)"; ctx.lineWidth = 3; ctx.stroke();
+    ctx.save(); ctx.translate(R, R); ctx.rotate(debut + a / 2);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillStyle = part.type === "perdu" ? ROUGE : BLANC;
+    ctx.font = "900 36px Montserrat, system-ui, sans-serif";
+    ctx.fillText(part.label, R - 24, 0);
+    ctx.restore();
+  });
+}
+
+const estFaux = res => res.type === "perdu" && PERDUS[res.idx] && PERDUS[res.idx].faux;
+
+function indicePour(res) {
+  const cible = estFaux(res) ? "cadeau" : res.type;
+  const lot = LOTS.find(l => l.id === res.id);
+  const caseLot = lot ? lot.part : res.id;
+  const ok = PARTS.map((p, i) => ({ p, i })).filter(({ p }) =>
+    p.type === cible && (cible !== "lot" || p.id === caseLot));
+  return ok[Math.floor(Math.random() * ok.length)].i;
+}
+
+// ---------- Utilitaires ----------
+function lire() { try { return JSON.parse(localStorage.getItem(CLE)); } catch (e) { return null; } }
+function ecrire(v) { try { localStorage.setItem(CLE, JSON.stringify(v)); } catch (e) {} }
+function effacer() { try { localStorage.removeItem(CLE); } catch (e) {} }
+const urlInsta = "https://www.instagram.com/" + CONFIG.instagram + "/";
+const heure = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+function confettis() {
+  const couleurs = [ROUGE, VERT, ROUGE, VERT, "#e8e8e8"];
+  for (let i = 0; i < 90; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = couleurs[i % couleurs.length];
+    c.style.animationDuration = 2 + Math.random() * 2.5 + "s";
+    c.style.animationDelay = Math.random() * .8 + "s";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 6000);
+  }
+}
+
+// Photo facultative : si elle manque ou ne charge pas, elle disparaît simplement
+function photoHTML(src) {
+  return src ? `<img class="photo" src="${src}" alt="" onerror="this.remove()">` : "";
+}
+
+// ---------- Affichage du résultat ----------
+function afficher(res, dejaJoue, sansConfettis) {
+  document.getElementById("ecran-roue").classList.add("cache");
+  document.getElementById("ecran-resultat").classList.remove("cache");
+  const carte = document.getElementById("carte");
+  let html = "";
+
+  if (res.type === "lot") {
+    const lot = LOTS.find(l => l.id === res.id) || { nom: "un lot", emoji: "🎁" };
+    carte.className = "carte gagne";
+    const visuel = lot.photo
+      ? `<img class="photo" src="${lot.photo}" alt="" onerror="this.outerHTML='<div class=&quot;emoji&quot;>${lot.emoji}</div>'">`
+      : `<div class="emoji">${lot.emoji}</div>`;
+    html = `<div class="grand-titre">GAGNÉ !</div>
+      ${visuel}
+      <p class="texte">${lot.texte || `Tu as gagné <b>${lot.nom}</b> !`}</p>
+      <div class="code">${res.code}</div>
+      <p class="petit">Tiré à ${res.heure}</p>
+      <p class="texte">${lot.retrait || `Montre cet écran à <b>${CONFIG.distributeur}</b> : il te donnera ton lot.`}</p>
+      <p class="petit">Ce lot est réservé pour toi : le code fait foi.</p>`;
+  } else if (res.type === "gain") {
+    const g = PETITS_GAINS.find(x => x.id === res.id) || PETITS_GAINS[0];
+    carte.className = "carte gagne";
+    html = `<div class="grand-titre">GAGNÉ ! ${g.emoji}</div>
+      <p class="texte"><b>${g.titre}</b></p>
+      ${photoHTML(g.photo)}
+      <p class="texte">${g.texte}</p>
+      <div class="code petit-code">${res.code || ""}</div>
+      <p class="petit">Montre-lui cet écran pour réclamer ton dû. Tiré à ${res.heure}</p>
+      <p class="texte">Tu ne le reconnais pas ? Indice sur notre Insta 👇</p>
+      <a class="bouton" href="${urlInsta}" target="_blank" rel="noopener">🔎 Voir l'indice sur Insta</a>`;
+  } else if (estFaux(res)) {
+    const x = PERDUS[res.idx];
+    carte.className = "carte gagne";
+    html = `<div class="grand-titre">GAGNÉ ! 🎁</div>
+      <p class="texte"><b>${x.titre}</b></p>
+      ${photoHTML(x.photo)}
+      <p class="texte">${x.texte}</p>`;
+  } else {
+    const x = PERDUS[res.idx] || PERDUS[0];
+    carte.className = "carte perdu";
+    html = `<div class="grand-titre">PERDU 😭</div>
+      <p class="texte">${x.texte}</p>
+      ${photoHTML(x.photo)}
+      ${x.insta ? `<a class="bouton" href="${urlInsta}" target="_blank" rel="noopener">📸 Je m'abonne</a>` : ""}`;
+  }
+  if (dejaJoue) html += `<p class="deja">Tu as déjà joué, voici ton résultat 😉</p>`;
+  if (TEST) html += `<p style="margin-top:18px"><button class="bouton" onclick="location.reload()">🔄 REJOUER (test)</button></p>`;
+  carte.innerHTML = html;
+  window.scrollTo(0, 0);
+  if ((res.type !== "perdu" || estFaux(res)) && !dejaJoue && !sansConfettis) confettis();
+}
+
+// ---------- Lancement ----------
+let tourne = false;
+const btn = document.getElementById("btn-tourner");
+btn.addEventListener("click", async () => {
+  if (tourne) return;
+  tourne = true;
+  btn.disabled = true;
+  btn.textContent = "…";
+  document.getElementById("erreur").classList.add("cache");
+
+  let res;
+  try {
+    res = TEST ? tirageTest() : await tirerServeur();
+  } catch (e) {
+    // Pas de réseau : rien n'est consommé, on peut réessayer
+    tourne = false;
+    btn.disabled = false;
+    btn.textContent = "RÉESSAYER";
+    document.getElementById("erreur").classList.remove("cache");
+    return;
+  }
+  res.heure = heure();
+  if (!TEST) ecrire(res); // enregistré tout de suite : recharger pendant que ça tourne ne permet pas de rejouer
+  btn.textContent = "ÇA TOURNE…";
+
+  const n = PARTS.length, a = 360 / n, i = indicePour(res);
+  const decalage = (Math.random() - .5) * a * .7;
+  const rotation = 360 * 6 - (i + .5) * a + decalage;
+  canvas.style.transform = `rotate(${rotation}deg)`;
+  setTimeout(() => afficher(res, false), 5100);
+});
+
+// Démarrage
+document.getElementById("lien-insta-pied").href = urlInsta;
+document.title = CONFIG.asso + " : la roue";
+const params = new URLSearchParams(location.search);
+if (params.get("reset") === "1") { effacer(); history.replaceState(null, "", location.pathname); }
+dessinerRoue();
+// Redessine quand la police Montserrat est chargée (sinon la roue garde la police par défaut)
+if (document.fonts && document.fonts.load) document.fonts.load("900 36px Montserrat").then(dessinerRoue).catch(() => {});
+
+// Aperçu (uniquement en local, pour vérifier les écrans) : ?voir=lot:SAUC, gain:PIERRE, perdu:2, erreur
+const voir = LOCAL && params.get("voir");
+if (voir) {
+  const [type, val] = voir.split(":");
+  if (type === "erreur") { btn.textContent = "RÉESSAYER"; document.getElementById("erreur").classList.remove("cache"); }
+  else if (type === "lot")  afficher({ type, id: val, code: val + "-4F7K", heure: "19:42" }, params.has("deja"), true);
+  else if (type === "gain") afficher({ type, id: val, code: "VERRE-9C2A", heure: "19:42" }, params.has("deja"), true);
+  else if (type === "perdu") afficher({ type, idx: +val, heure: "19:42" }, params.has("deja"), true);
+} else if (TEST) {
+  const bandeau = document.createElement("div");
+  bandeau.textContent = "MODE TEST : tirages simulés, le stock n'est pas touché";
+  bandeau.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:60;background:#ffcc00;color:#000;font-weight:700;font-size:.8rem;padding:6px;text-align:center";
+  document.body.appendChild(bandeau);
+} else {
+  const dejaLa = lire();
+  if (dejaLa && dejaLa.type) afficher(dejaLa, true);
+}
+</script>
+</body>
+</html>
