@@ -187,7 +187,9 @@ const PETITS_GAINS = [
   { id: "AMBASSADEUR", titre: "Notre ambassadeur du terroir te paie un verre !", emoji: "🍻", photo: "",
     texte: "Trouve <b>notre ambassadeur du terroir</b> : il te paie un verre.<br>Et il t'expliquera sûrement d'où vient chaque goutte 🍇" },
   { id: "PORTEUR", titre: "Notre porteur de marmite te paie un verre !", emoji: "🍻", photo: "",
-    texte: "Trouve <b>notre porteur de marmite</b> : il te paie un verre.<br>Tu le reconnaîtras, il a des bras solides 💪" }
+    texte: "Trouve <b>notre porteur de marmite</b> : il te paie un verre.<br>Tu le reconnaîtras, il a des bras solides 💪" },
+  { id: "VICEPRES", titre: "Notre vice-présidente t'offre un verre !", emoji: "🍻", photo: "photos/vice-presidente.jpg",
+    texte: "Trouve <b>notre vice-présidente</b> : elle t'offre un verre.<br>Elle a toujours une bouteille dans chaque poche 🍷" }
 ];
 
 // Perdu : une phrase, et une photo si tu veux (photo: "" pour aucune).
@@ -200,7 +202,7 @@ const PERDUS = [
     texte: "Enfin… une photo de lui avec. C'est déjà pas mal, non ? 😘" },
   { texte: "Raté ! Va noyer ton chagrin au bar.", photo: "" },
   { texte: "Perdu ! Le sanglier ne t'a pas choisi cette fois 🐗", photo: "" },
-  { texte: "Raté ! T'avais 76 % de chances de lire ce message. Bravo, t'es dans la moyenne.", photo: "" },
+  { texte: "Raté ! T'avais 75 % de chances de lire ce message. Bravo, t'es dans la moyenne.", photo: "" },
   { texte: "Ez duzu irabazi ! (Ça veut dire « t'as perdu » en basque. On t'apprend des trucs au moins.)", photo: "" },
   { texte: "Perdu ! Mais tu peux quand même t'abonner à notre compte Insta, ça console 🐗", photo: "", insta: true }
 ];
@@ -334,8 +336,8 @@ function afficher(res, dejaJoue, sansConfettis) {
       ${photoHTML(g.photo)}
       <p class="texte">${g.texte}</p>
       <div class="code petit-code">${res.code || ""}</div>
-      <p class="petit">Montre-lui cet écran pour réclamer ton dû. Tiré à ${res.heure}</p>
-      <p class="texte">Tu ne le reconnais pas ? Indice sur notre Insta 👇</p>
+      <p class="petit">Montre cet écran pour réclamer ton dû. Tiré à ${res.heure}</p>
+      <p class="texte">Tu ne sais pas qui c'est ? Indice sur notre Insta 👇</p>
       <a class="bouton" href="${urlInsta}">🔎 Voir l'indice sur Insta</a>`;
   } else if (estFaux(res)) {
     const x = PERDUS[res.idx];
