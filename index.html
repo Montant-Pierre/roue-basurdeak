@@ -418,6 +418,19 @@ if (voir) {
 } else {
   const dejaLa = lire();
   if (dejaLa && dejaLa.type) afficher(dejaLa, true);
+  else afficherFin();
+}
+
+// Jeu terminé : plus de roue, juste un message de remerciement
+function afficherFin() {
+  document.getElementById("ecran-roue").classList.add("cache");
+  document.getElementById("ecran-resultat").classList.remove("cache");
+  const carte = document.getElementById("carte");
+  carte.className = "carte gagne";
+  carte.innerHTML = `<div class="grand-titre">C'EST FINI ! 🐗</div>
+    <p class="texte"><b>Le jeu est terminé, merci à tous !</b></p>
+    <p class="texte">Les 19 lots ont tous trouvé preneur. Merci d'avoir joué et d'être venus au banquet des Basurdeak.</p>
+    <p class="texte">Eskerrik asko eta laster arte ! 🍷</p>`;
 }
 </script>
 </body>
